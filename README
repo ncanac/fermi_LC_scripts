@@ -1,0 +1,83 @@
+I. Description:
+
+These are a set of scripts I wrote to facilitate doing light curve analyses of
+blazars using Fermi-LAT data. They should be used in conjunction with existing
+Fermi Science Tools along with the LAT analysis script quickCurve, as described
+below under "Usage". The following scripts are included:
+
+makeXML.sh - Runs the tool make3FGLxml.py. All that needs to be supplied is the 
+base name, and the xml model file will be created.
+
+qC_diffrsp.py - Runs the Fermi science tool gtdiffrsp on the time binned data 
+products.
+
+qC_fit.py - Performs an unbinned likelihood analysis for all the time bins from 
+START_BIN to STOP_BIN in serial. Takes three command line arguments: base name, 
+number of starting time bin, and number of stopping time bin. This should 
+generally be executed by running run_qC_fit.py rather than being executed 
+directly to take advantage of parallel processing.
+
+run_qC_fit.py - Splits up all the time bins into n chunks, where n is the number
+of cores specified in the config file <base>.cfg, and spawns n processes of 
+qC_fit.py to perform the likelihood analyses for each chunk. Takes one command 
+line argument, the base name.
+
+qC_utils.py - Contains any useful functions that can be called by the other 
+scripts.
+
+II. Requirements:
+
+Everything should work if you've installed the Fermi Science tools. Refer to 
+their website here: http://fermi.gsfc.nasa.gov/ssc/data/analysis/software/ for
+more information.
+
+III. Usage:
+
+First perform the "DC" analysis
+
+1. Copy the following files to your working directory:
+config_template.cfg
+fit_notebook_template.ipynb
+gll_iem_v05.fit
+gll_iem_v05_rev1.fit
+gll_psc_v14.fit
+iso_source_v05.txt
+make3FGLxml.py
+makeXML.sh
+photons list file
+spacecraft file
+
+2. Copy config_template.cfg to <base>.cfg and fill in entries appropriate for 
+the object you're analyzing.
+
+3. Run: quickAnalysis --filter -n <base>
+
+4. Run: ./makeXML.sh <base>
+
+5. Change source of interest spectrum to power law and put in correct path names 
+for diffuse models in xml model file.
+
+6. Run: quickAnalysis -a -n <base>
+
+7. Perform "DC" fit using binned likelihood analysis to region using, e.g., 
+quickLike tool.
+
+Now perform the "LC" analysis
+
+1. In a new directory (or the same directory but change file names accordingly), 
+copy fitted xml model file from DC analysis, config file, photons list, 
+spacecraft file, and diffuse models.
+
+2. Fix all sources in xml model file to their best fit values from DC analysis 
+except for source of interest, which should remain free. Also change to unbinned 
+analysis in config file.
+
+3. Run: quickCurve run <base>
+
+4. Run: python qC_diffrsp <base>
+
+5. Run: python run_qC_fit <base>
+
+6. Done! Output will be written to a file called lc_results.txt, which will 
+contain information about the flux, spectral index, error bars, and significance 
+of the source of interest during each time bin.
